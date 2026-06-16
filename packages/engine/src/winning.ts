@@ -1,4 +1,4 @@
-import { type Counts, type Meld, type Suit } from './types';
+import { type Counts, type Meld, type Suit, type TileIndex } from './types';
 import { suitOfIndex } from './tiles';
 
 // 单门花色 9 格能否拆成若干 顺子/刻子（无将）
@@ -58,13 +58,24 @@ export function classifyChiDui(hand: Counts): { isChiDui: boolean; longs: number
   return { isChiDui: true, longs };
 }
 
-/** 综合胡牌判定（含缺门校验）。melds 为已公开副露 */
-export function canWin(hand: Counts, melds: Meld[], lackSuit: Suit | null): boolean {
+/** 综合胡牌判定（含缺门校验）。melds 为已公开副露。
+ *  winningTile: 点炮/抢杠胡时补入该张（13 张手牌 + 1 张），自摸时手牌已含 14 张不需传。
+ */
+export function canWin(
+  hand: Counts,
+  melds: Meld[],
+  lackSuit: Suit | null,
+  winningTile?: TileIndex,
+): boolean {
+  // 如有待补入的胡牌张，生成 14 张视图
+  const h = winningTile !== undefined ? hand.slice() : hand;
+  if (winningTile !== undefined) h[winningTile]! += 1;
+
   if (lackSuit) {
     for (let i = 0; i < 27; i++) {
-      if (hand[i]! > 0 && suitOfIndex(i) === lackSuit) return false;
+      if (h[i]! > 0 && suitOfIndex(i) === lackSuit) return false;
     }
   }
-  if (melds.length === 0 && classifyChiDui(hand).isChiDui) return true;
-  return canWinStandard(hand, melds.length);
+  if (melds.length === 0 && classifyChiDui(h).isChiDui) return true;
+  return canWinStandard(h, melds.length);
 }

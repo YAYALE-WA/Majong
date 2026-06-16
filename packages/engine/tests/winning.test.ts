@@ -53,3 +53,31 @@ describe('canWin 含缺门校验', () => {
     expect(canWin(hand, [], 'B')).toBe(true);  // 缺筒，手里无筒
   });
 });
+
+describe('canWin 补入 winningTile（点炮/抢杠胡视图）', () => {
+  it('13 张手牌补入点炮张后成胡', () => {
+    // 123W 123W 789W 99W(将) + 55T，听 5T；点炮补入 5T → 胡
+    const hand13 = handToCounts([
+      W(1), W(2), W(3), W(1), W(2), W(3),
+      W(7), W(8), W(9), W(9), W(9), T(5), T(5),
+    ]);
+    expect(canWin(hand13, [], 'B', T(5))).toBe(true);
+    // 补入不相关的牌不能胡
+    expect(canWin(hand13, [], 'B', T(1))).toBe(false);
+  });
+  it('补入的牌属于缺门则不能胡', () => {
+    const hand13 = handToCounts([
+      W(1), W(2), W(3), W(1), W(2), W(3),
+      W(7), W(8), W(9), W(9), W(9), T(5), T(5),
+    ]);
+    // 缺条，补入的 5T 是条 → 视图含缺门，不能胡
+    expect(canWin(hand13, [], 'T', T(5))).toBe(false);
+  });
+  it('不传 winningTile 时按 14 张原手牌判定（自摸）', () => {
+    const hand14 = handToCounts([
+      W(1), W(2), W(3), W(1), W(2), W(3),
+      W(7), W(8), W(9), W(9), W(9), T(5), T(5), T(5),
+    ]);
+    expect(canWin(hand14, [], 'B')).toBe(true);
+  });
+});

@@ -869,10 +869,10 @@ function isPengPeng(hand: Counts, melds: Meld[]): boolean {
   return false;
 }
 
-// 金钩钓：对对胡且除将外全部副露（暗牌仅剩将 2 张）
+// 金钩钓：对对胡且除将外全部明副露（暗牌仅剩将 2 张；暗杠不算明副露）
 function isJinGouDiao(hand: Counts, melds: Meld[]): boolean {
   const total = hand.reduce((a, b) => a + b, 0);
-  return melds.length === 4 && total === 2;
+  return melds.length === 4 && total === 2 && melds.every((m) => m.kind !== 'GANG_AN');
 }
 
 // 十八罗汉：4 个杠 + 将
@@ -880,10 +880,11 @@ function isShiBaLuoHan(melds: Meld[]): boolean {
   return melds.length === 4 && melds.every(isGang);
 }
 
-// 统计「根」：4 张相同的组数（暗刻+第4张 或 杠）。七对系列单独处理。
+// 统计「根」：4 张相同的组数（杠、暗手4张、碰后手中第4张）。七对系列单独处理。
 function countGen(hand: Counts, melds: Meld[]): number {
   let gen = 0;
   for (const m of melds) if (isGang(m)) gen += 1;
+  for (const m of melds) if (m.kind === 'PONG' && hand[m.tile]! >= 1) gen += 1;
   for (let i = 0; i < 27; i++) if (hand[i]! === 4) gen += 1;
   return gen;
 }
@@ -929,9 +930,9 @@ export function computeFan(hand: Counts, melds: Meld[], ctx: FanContext): FanRes
   if (ctx.gangFlower) addOns.push({ name: '杠上开花', fan: 1 });
   if (ctx.haidi) addOns.push({ name: '海底', fan: 1 });
   if (ctx.qiangGang) addOns.push({ name: '抢杠胡', fan: 1 });
-  // 门清：无碰、无明杠（暗杠不破）
+  // 门清：无碰、无明杠、无补杠（暗杠不破），七对系列可叠加
   const menqing = melds.every((m) => m.kind === 'GANG_AN');
-  if (menqing && !chidui.isChiDui) addOns.push({ name: '门清', fan: 1 });
+  if (menqing) addOns.push({ name: '门清', fan: 1 });
 
   const addFan = addOns.reduce((s, a) => s + a.fan, 0);
   const totalFan = baseFan + addFan;
@@ -981,9 +982,14 @@ describe('番型付分', () => {
     expect(d[0]).toBe(8); expect(d[1]).toBe(-8); expect(d[2]).toBe(0); expect(d[3]).toBe(0);
     expect(d.reduce((a, b) => a + b, 0)).toBe(0);
   });
-  it('自摸：三家各付', () => {
+  it('自摸：默认四家都在桌时三家各付', () => {
     const d = settleWin({ winner: 0, from: null, zimo: true, fan: fan(4) });
     expect(d[0]).toBe(12); expect(d[1]).toBe(-4); expect(d[2]).toBe(-4); expect(d[3]).toBe(-4);
+    expect(d.reduce((a, b) => a + b, 0)).toBe(0);
+  });
+  it('血战后续自摸：已胡下桌玩家不再付', () => {
+    const d = settleWin({ winner: 1, from: null, zimo: true, fan: fan(4), activeSeats: [1, 2, 3] });
+    expect(d[0]).toBe(0); expect(d[1]).toBe(8); expect(d[2]).toBe(-4); expect(d[3]).toBe(-4);
     expect(d.reduce((a, b) => a + b, 0)).toBe(0);
   });
 });
@@ -994,13 +1000,18 @@ describe('杠分', () => {
     expect(d[0]).toBe(2); expect(d[2]).toBe(-2);
     expect(d.reduce((a, b) => a + b, 0)).toBe(0);
   });
-  it('暗杠：三家各付 2', () => {
+  it('暗杠：默认四家都在桌时三家各付 2', () => {
     const d = settleGang({ ganger: 0, kind: 'GANG_AN', from: null, baseScore: 1 });
     expect(d[0]).toBe(6); expect(d[1]).toBe(-2); expect(d[2]).toBe(-2); expect(d[3]).toBe(-2);
   });
-  it('补杠：三家各付 1', () => {
+  it('补杠：默认四家都在桌时三家各付 1', () => {
     const d = settleGang({ ganger: 0, kind: 'GANG_BU', from: null, baseScore: 1 });
     expect(d[0]).toBe(3); expect(d[1]).toBe(-1);
+  });
+  it('血战后续暗杠：只收仍在桌玩家', () => {
+    const d = settleGang({ ganger: 2, kind: 'GANG_AN', from: null, baseScore: 1, activeSeats: [1, 2, 3] });
+    expect(d[0]).toBe(0); expect(d[1]).toBe(-2); expect(d[2]).toBe(4); expect(d[3]).toBe(-2);
+    expect(d.reduce((a, b) => a + b, 0)).toBe(0);
   });
 });
 
@@ -1033,12 +1044,13 @@ export type Delta = [number, number, number, number];
 const zero = (): Delta => [0, 0, 0, 0];
 
 export function settleWin(p: {
-  winner: Seat; from: Seat | null; zimo: boolean; fan: FanResult;
+  winner: Seat; from: Seat | null; zimo: boolean; fan: FanResult; activeSeats?: Seat[];
 }): Delta {
   const d = zero();
   const s = p.fan.score;
+  const active = p.activeSeats ?? [0, 1, 2, 3] as Seat[];
   if (p.zimo) {
-    for (let i = 0; i < 4; i++) {
+    for (const i of active) {
       if (i === p.winner) continue;
       d[i] -= s; d[p.winner] += s;
     }
@@ -1049,18 +1061,19 @@ export function settleWin(p: {
 }
 
 export function settleGang(p: {
-  ganger: Seat; kind: GangKind; from: Seat | null; baseScore: number;
+  ganger: Seat; kind: GangKind; from: Seat | null; baseScore: number; activeSeats?: Seat[];
 }): Delta {
   const d = zero();
+  const active = p.activeSeats ?? [0, 1, 2, 3] as Seat[];
   if (p.kind === 'GANG_MING') {
     const amt = 2 * p.baseScore;
     d[p.from!] -= amt; d[p.ganger] += amt;
   } else if (p.kind === 'GANG_AN') {
     const amt = 2 * p.baseScore;
-    for (let i = 0; i < 4; i++) { if (i === p.ganger) continue; d[i] -= amt; d[p.ganger] += amt; }
+    for (const i of active) { if (i === p.ganger) continue; d[i] -= amt; d[p.ganger] += amt; }
   } else { // GANG_BU
     const amt = 1 * p.baseScore;
-    for (let i = 0; i < 4; i++) { if (i === p.ganger) continue; d[i] -= amt; d[p.ganger] += amt; }
+    for (const i of active) { if (i === p.ganger) continue; d[i] -= amt; d[p.ganger] += amt; }
   }
   return d;
 }
@@ -1257,11 +1270,11 @@ Expected: FAIL
 - `chooseLack(seat, suit)`：写入 `lackSuit`；四家齐后 `phase='PLAYING'`，`turn=dealer`，进入「庄家需打牌」状态（庄家已 14 张）。
 - `legalDiscards(seat)`：返回 `hand` 中所有 >0 的 index（缺门牌也可打）。
 - `discard(seat, tile)`：从手牌移除，推入 `discards`，设 `lastDiscard`，计算 `pendingResponses`（其他未下桌玩家中可胡/可杠/可碰者）。无人可响应则直接 `advanceDraw()`。
-- `pong/gang/win/pass`：处理响应。响应优先级：胡>杠>碰。`pass` 从 `pendingResponses` 移除；空了且无人执行操作则 `advanceDraw()`。
+- `pong/gang/win/pass`：处理响应。响应优先级：胡>杠>碰。多家可胡时采用一炮多响，所有选择胡牌的玩家同时结算并下桌；`pass` 从 `pendingResponses` 移除；空了且无人执行操作则 `advanceDraw()`。
 - `advanceDraw()`：下一未下桌玩家从 `wall` 摸 1 张；若 `wall` 空 → `endRoundDraw()`。摸牌后检测自摸/自杠机会（暴露给查询/AI），等待该玩家 discard 或 win/gang。
-- `win(seat)`：调用 `canWin`，构造 `FanContext`（zimo 依据来源、haidi 依据 wall 是否空、gangFlower 依据上一步是否杠后摸牌），调 `computeFan` + `settleWin`，更新 `roundScore`，设 `hasLeft=true`，记录 `gangScoreReceived` 不变。检测终止：已下桌 >=3 → `endRound()`。
-- `gang(seat, tile, kind)`：校验，更新 melds/hand，调 `settleGang` 更新分并记 `gangScoreReceived`；抢杠胡：补杠时先检查其他玩家 canWin → 若 enableQiangGang 且有人胡，转为该玩家点炮胡（标记 qiangGang）。杠后从 wall 摸 1 张（杠上开花标志）。
-- `endRoundDraw()`：流局。对每个未下桌玩家计算 `tingScore`（遍历所有可打牌后是否听牌；听牌则取其听的最大番分，用 `computeFan` 估算自摸分），调 `settleDraw`；若 enableTuiShui，对「未胡未听」玩家调 `settleTuiShui` 退还其 `gangScoreReceived`。汇总进 `roundScore`，`phase='ROUND_END'`。
+- `win(seat)`：点炮/抢杠/查叫试算需先把 `winningTile` 补入 13 张手牌后调用 `canWin`；构造 `FanContext`（zimo 依据来源、haidi 依据 wall 是否空、gangFlower 依据上一步是否杠后摸牌），调 `computeFan` + `settleWin(activeSeats=未胡在桌玩家)`，更新 `roundScore`，设 `hasLeft=true`，记录 `gangScoreReceived` 不变。检测终止：已下桌 >=3 → `endRound()`。
+- `gang(seat, tile, kind)`：校验，更新 melds/hand，调 `settleGang(activeSeats=未胡在桌玩家)` 更新分并记 `gangScoreReceived`；抢杠胡：补杠时先检查其他未胡玩家 canWin → 若 enableQiangGang 且有人胡，按一炮多响转为点炮胡（标记 qiangGang）。杠后从 wall 摸 1 张（杠上开花标志）。
+- `endRoundDraw()`：流局。对每个未下桌玩家计算 `tingScore`（当前手牌必须无定缺花色；枚举 27 种补入牌，补入后可胡则用 `computeFan` 估算番分，取最高；无可胡牌则未听），调 `settleDraw`；若 enableTuiShui，对「未胡未听」玩家调 `settleTuiShui` 退还其 `gangScoreReceived`。汇总进 `roundScore`，`phase='ROUND_END'`。
 - `endRound()`：3 家胡时无查叫（已分胜负），直接结束本局。
 - `nextRound()`：把 `roundScore` 累加进 `totalScore`，清局内状态，`roundIndex++`，换庄（`dealer=(dealer+1)%4`）；若 `roundIndex>=totalRounds` → `phase='GAME_END'`，否则重新 `deal()`。
 

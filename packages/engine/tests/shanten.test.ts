@@ -28,4 +28,22 @@ describe('向听数', () => {
     ]);
     expect(shanten(hand, 0)).toBe(0);
   });
+  it('4 面子（副露）+ 搭子无将 ≠ 胡，向听 = 0', () => {
+    // meldCount=4，暗牌 [1W,2W] 是搭子而非将 → 不是胡牌
+    const hand = handToCounts([W(1), W(2)]);
+    expect(shanten(hand, 4)).toBe(0);
+  });
+  it('14 张：4 面子 + 搭子无将 ≠ 胡，向听 = 0', () => {
+    // W1W2W3 W4W5W6 W7W8W9 T1T2T3 + T4T5（搭子，无将）
+    const hand = handToCounts([
+      W(1), W(2), W(3), W(4), W(5), W(6), W(7), W(8), W(9),
+      T(1), T(2), T(3), T(4), T(5),
+    ]);
+    expect(shanten(hand, 0)).toBe(0);
+  });
+  it('4 面子（副露）+ 真将（金钩钓）= 胡，向听 = -1', () => {
+    // meldCount=4，暗牌 [5W,5W] 是真将 → 胡牌
+    const hand = handToCounts([W(5), W(5)]);
+    expect(shanten(hand, 4)).toBe(-1);
+  });
 });
