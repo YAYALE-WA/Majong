@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git -c user.name=Claude -c user.email=noreply@anthropic.com commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(pnpm --version)",
+      "Bash(corepack --version)",
+      "Bash(corepack pnpm *)",
+      "Bash(npm install *)",
+      "Bash(npm config *)",
+      "Bash(/Users/shaoqw/.local/bin/pnpm --version)",
+      "Bash(git commit *)",
+      "Bash(pnpm -r test)"
+    ]
+  }
+}
