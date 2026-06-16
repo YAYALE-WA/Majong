@@ -1,0 +1,135 @@
+/* ===== Lobby ===== */
+.lobby {
+  max-width: 420px;
+  margin: 60px auto;
+  text-align: center;
+}
+.lobby h1 { font-size: 28px; margin-bottom: 30px; }
+.lobby-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: rgba(0,0,0,.25);
+  padding: 28px;
+  border-radius: 12px;
+}
+.lobby-form label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+}
+.lobby-form select { padding: 6px 10px; border-radius: 6px; font-size: 15px; min-width: 110px; }
+.lobby-form .checkbox { justify-content: flex-start; gap: 8px; }
+.start-btn {
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 18px;
+  background: #e67e22;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+
+/* ===== Table ===== */
+.table-page { max-width: 1000px; margin: 0 auto; padding: 10px; }
+.scoreboard {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  background: rgba(0,0,0,.3);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.round-info { font-weight: bold; color: #f1c40f; }
+.seats-top { display: flex; justify-content: center; }
+.seats-mid {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+/* ===== Seat ===== */
+.seat-panel {
+  background: rgba(0,0,0,.2);
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 150px;
+}
+.seat-current { outline: 2px solid #f1c40f; }
+.seat-left { opacity: .6; }
+.seat-head { display: flex; gap: 8px; align-items: center; font-size: 14px; margin-bottom: 4px; }
+.seat-name { font-weight: bold; }
+.seat-lack { background: #c0392b; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+.seat-won { background: #f39c12; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+.seat-score { margin-left: auto; font-weight: bold; }
+.seat-hand-back { display: flex; flex-wrap: wrap; }
+.seat-hand-back .tile { transform: scale(.55); margin: -3px; transform-origin: top left; }
+
+/* ===== Discard pool ===== */
+.discard-pool {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: rgba(0,0,0,.18);
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 140px;
+}
+.discard-seat { display: flex; flex-wrap: wrap; align-content: flex-start; }
+.discard-seat .tile { transform: scale(.7); margin: -2px; }
+
+/* ===== My area ===== */
+.my-area { margin-top: 10px; }
+.my-info { display: flex; align-items: center; gap: 16px; justify-content: center; margin-bottom: 6px; }
+.wall-info { font-size: 14px; color: #ddd; }
+.action-bar { display: flex; gap: 12px; justify-content: center; margin-top: 10px; }
+.action-bar button {
+  padding: 10px 26px;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  background: #2980b9;
+  color: #fff;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+.modal-box {
+  background: #fff;
+  color: #222;
+  padding: 24px 32px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 300px;
+}
+.lack-buttons { display: flex; gap: 14px; justify-content: center; margin-top: 16px; }
+.lack-btn {
+  width: 64px; height: 64px;
+  font-size: 24px; font-weight: bold;
+  border: 2px solid #333; border-radius: 8px;
+  background: #fffdf5;
+}
+.lack-btn.suit-W { color: #c0392b; }
+.lack-btn.suit-T { color: #27ae60; }
+.lack-btn.suit-B { color: #2980b9; }
+
+.result-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.result-table th, .result-table td { padding: 6px 12px; border-bottom: 1px solid #ddd; }
+.result-table .pos { color: #c0392b; }
+.result-table .neg { color: #27ae60; }
+.next-btn {
+  padding: 10px 30px; font-size: 16px;
+  background: #e67e22; color: #fff; border: none; border-radius: 8px;
+}
