@@ -78,4 +78,17 @@ describe('AI 互打：零和守恒总闸', () => {
     }
     expect(ended).toBeGreaterThanOrEqual(25);
   });
+
+  it('血战事件真实发生（多副内出现胡牌与杠/副露）', () => {
+    let totalWins = 0;
+    let totalMelds = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      const st = playGame(seed).getState();
+      totalWins += st.players.filter((p) => p.winRecord !== null).length;
+      totalMelds += st.players.reduce((a, p) => a + p.melds.length, 0);
+    }
+    // 30 副里应有相当数量的胡牌和副露（碰/杠），证明不是每局都空流局
+    expect(totalWins).toBeGreaterThan(0);
+    expect(totalMelds).toBeGreaterThan(0);
+  });
 });
