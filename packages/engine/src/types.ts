@@ -14,7 +14,7 @@ export type Meld =
 
 export type GangKind = 'GANG_MING' | 'GANG_AN' | 'GANG_BU';
 
-export type GangScore = { from: Seat; amount: number; gangType: Meld['kind'] };
+export type GangScore = { from: Seat; amount: number; gangType: GangKind };
 
 export type WinType = 'ZIMO' | 'DIANPAO';
 
